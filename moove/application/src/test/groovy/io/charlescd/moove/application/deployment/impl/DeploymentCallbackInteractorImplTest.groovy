@@ -28,10 +28,12 @@ import io.charlescd.moove.domain.*
 import io.charlescd.moove.domain.exceptions.NotFoundException
 import io.charlescd.moove.domain.repository.BuildRepository
 import io.charlescd.moove.domain.repository.DeploymentRepository
+import io.charlescd.moove.domain.repository.KeyValueRuleRepository
 import io.charlescd.moove.domain.repository.UserRepository
 import io.charlescd.moove.domain.repository.WorkspaceRepository
 import io.charlescd.moove.domain.service.CircleMatcherService
 import io.charlescd.moove.domain.service.HermesService
+import io.charlescd.moove.infrastructure.repository.JdbcKeyValueRuleRepository
 import spock.lang.Specification
 
 import java.time.LocalDateTime
@@ -48,7 +50,7 @@ class DeploymentCallbackInteractorImplTest extends Specification {
 
     private CircleMatcherService circleMatcherService
     private WorkspaceService workspaceService
-    private CsvSegmentationService csvSegmentationService
+    private KeyValueRuleRepository keyValueRuleRepository
     private WebhookEventService webhookEventService
     private DeploymentService deploymentService
     private ObjectMapper objectMapper = new ObjectMapper().registerModule(new KotlinModule()).registerModule(new JavaTimeModule())
@@ -58,13 +60,13 @@ class DeploymentCallbackInteractorImplTest extends Specification {
         this.circleMatcherService = Mock(CircleMatcherService)
         this.webhookEventService = new WebhookEventService(hermesService, new BuildService(buildRepository))
         this.deploymentService = new DeploymentService(deploymentRepository)
-        this.csvSegmentationService = new CsvSegmentationService(objectMapper);
+        this.keyValueRuleRepository = Mock(JdbcKeyValueRuleRepository)
         this.deploymentCallbackInteractor = new DeploymentCallbackInteractorImpl(
                 deploymentService,
                 webhookEventService,
                 circleMatcherService,
                 workspaceService,
-                csvSegmentationService
+                keyValueRuleRepository
         )
     }
 
@@ -589,6 +591,8 @@ class DeploymentCallbackInteractorImplTest extends Specification {
         1 * this.hermesService.notifySubscriptionEvent(_)
 
         1 * this.buildRepository.findById(buildId) >> Optional.of(getBuild(DeploymentStatusEnum.DEPLOYED, circle))
+
+        1 * this.keyValueRuleRepository.findByCircle(circle.id) >> []
 
         0 * this.circleMatcherService.updateImport(_, _, _, _, _) >> { arguments ->
         }
