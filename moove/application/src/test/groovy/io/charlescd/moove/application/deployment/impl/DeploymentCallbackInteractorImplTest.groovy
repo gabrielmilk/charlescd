@@ -16,11 +16,12 @@
 
 package io.charlescd.moove.application.deployment.impl
 
-
+import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import io.charlescd.moove.application.*
+import io.charlescd.moove.application.circle.request.NodePart
 import io.charlescd.moove.application.deployment.DeploymentCallbackInteractor
 import io.charlescd.moove.application.deployment.request.DeploymentCallbackRequest
 import io.charlescd.moove.application.deployment.request.DeploymentRequestStatus
@@ -517,9 +518,13 @@ class DeploymentCallbackInteractorImplTest extends Specification {
 
     def "when callback is of a circle created with csv should create the correct list of nodes "() {
         given:
+        def keyValueRule = getKeyValueRule("user", "charles" )
+        def secondKeyValueRule = getKeyValueRule("user", "admin" )
         def request = new DeploymentCallbackRequest(DeploymentRequestStatus.UNDEPLOYED)
 
-        def circle = getCircle(false)
+        def circle = new Circle("9aec1a44-77e7-49db-9998-54835cb4aae8", "circle", "8997c35d-7861-4198-9c9b-a2491bf08911", author,
+                LocalDateTime.now(), MatcherTypeEnum.SIMPLE_KV, null, null, null, false, workspaceId,
+                false, null)
         def workspace = new Workspace(workspaceId, "Women", author, LocalDateTime.now(), [],
                 WorkspaceStatusEnum.COMPLETE, "7a973eed-599b-428d-89f0-9ef6db8fd39d",
                 "http://matcher-uri.com.br", "833336cd-742c-4f62-9594-45ac0a1e807a",
@@ -541,19 +546,22 @@ class DeploymentCallbackInteractorImplTest extends Specification {
 
         1 * this.hermesService.notifySubscriptionEvent(_)
 
+        1 * this.keyValueRuleRepository.findByCircle(circle.id) >> [keyValueRule, secondKeyValueRule]
+
         1 * this.buildRepository.findById(buildId) >> Optional.of(getBuild(DeploymentStatusEnum.DEPLOYED, circle))
 
-        1 * this.circleMatcherService.update(_, _, _, _) >> { arguments ->
+        2 * this.circleMatcherService.updateImport(_, _, _, _, _) >> { arguments ->
             def circleCompare = arguments[0]
             def reference = arguments[1]
-            def matcherUrl = arguments[2]
-            def active = arguments[3]
-
+            def nodes = arguments[2]
+            def matcherUrl = arguments[3]
+            def active = arguments[4]
             assert circleCompare instanceof Circle
             assert circleCompare.id == circle.id
             assert matcherUrl.toString() == workspace.circleMatcherUrl
             assert reference == circle.reference
             assert active == false
+
         }
 
     }
@@ -646,6 +654,17 @@ class DeploymentCallbackInteractorImplTest extends Specification {
         return new User('4e806b2a-557b-45c5-91be-1e1db909bef6', 'User name', 'user@email.com', 'user.photo.png',
                 new ArrayList<WorkspacePermissions>(), false, LocalDateTime.now())
 
+    }
+
+    private static KeyValueRule getKeyValueRule(String key, String value)  {
+        def nodePart = getNodePart(key, value)
+        def jsonNode = new ObjectMapper().valueToTree(nodePart)
+        return new KeyValueRule("8c6e4281-ae17-415c-b904-e5514aff6bc1", jsonNode, TestUtils.cirleId)
+    }
+
+    private static NodePart getNodePart(String key, String value) {
+        def rulePart = new NodePart.RulePart(key, NodePart.ConditionEnum.EQUAL, [value])
+        return new NodePart(NodePart.NodeTypeRequest.RULE, NodePart.LogicalOperatorRequest.OR, null, rulePart)
     }
 
     private static getCircle(boolean defaultCircle) {

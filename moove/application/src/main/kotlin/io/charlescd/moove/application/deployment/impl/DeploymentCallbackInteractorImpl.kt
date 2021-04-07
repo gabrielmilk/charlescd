@@ -86,7 +86,7 @@ open class DeploymentCallbackInteractorImpl(
             if (circle.matcherType == MatcherTypeEnum.SIMPLE_KV) {
                 val rules = keyValueRuleRepository.findByCircle(circle.id)
                 rules.map { keyValueRule ->
-                    keyValueRule.rule.chunked(100).map {
+                    keyValueRule.rule.chunked(100).forEach {
                         this.circleMatcherService.updateImport(circle, circle.reference, it, workspace.circleMatcherUrl!!, isActive)
                     }
                 }
