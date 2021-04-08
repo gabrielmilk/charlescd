@@ -550,7 +550,7 @@ class DeploymentCallbackInteractorImplTest extends Specification {
 
         1 * this.buildRepository.findById(buildId) >> Optional.of(getBuild(DeploymentStatusEnum.DEPLOYED, circle))
 
-        2 * this.circleMatcherService.updateImport(_, _, _, _, _) >> { arguments ->
+        1 * this.circleMatcherService.updateImport(_, _, _, _, _) >> { arguments ->
             def circleCompare = arguments[0]
             def reference = arguments[1]
             def nodes = arguments[2]
@@ -561,7 +561,14 @@ class DeploymentCallbackInteractorImplTest extends Specification {
             assert matcherUrl.toString() == workspace.circleMatcherUrl
             assert reference == circle.reference
             assert active == false
-
+            assert nodes instanceof List<JsonNode>
+            assert nodes.size() == 2
+            def ruleCompare = objectMapper.treeToValue(nodes[0],NodePart.class)
+            def SecondRuleCompare = objectMapper.treeToValue(nodes[1],NodePart.class)
+            assert ruleCompare.content.key == "user"
+            assert ruleCompare.content.value[0] == "charles"
+            assert SecondRuleCompare.content.key == "user"
+            assert SecondRuleCompare.content.value[0] == "admin"
         }
 
     }
