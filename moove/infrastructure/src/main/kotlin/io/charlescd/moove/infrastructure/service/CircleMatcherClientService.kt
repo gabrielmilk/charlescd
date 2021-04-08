@@ -83,8 +83,9 @@ class CircleMatcherClientService(
         return nodes.map { createImportMatcherRequest(circle, it, previousReference, active) }
     }
 
-    private fun createImportMatcherRequest(circle: Circle, jsonNode: JsonNode, previousReference: String? = null, isActive: Boolean) =
-        CircleMatcherRequest(
+    private fun createImportMatcherRequest(circle: Circle, jsonNode: JsonNode, previousReference: String? = null, isActive: Boolean): CircleMatcherRequest {
+        println(jsonNode)
+        return CircleMatcherRequest(
             name = circle.name,
             reference = circle.reference,
             previousReference = previousReference,
@@ -100,7 +101,7 @@ class CircleMatcherClientService(
             createdAt = circle.createdAt,
             percentage = circle.percentage
         )
-
+    }
     private fun createMatcherRequest(circle: Circle, isActive: Boolean, previousReference: String? = null): CircleMatcherRequest =
         CircleMatcherRequest(
             name = circle.name,
