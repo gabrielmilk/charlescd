@@ -48,7 +48,7 @@ open class DeploymentCallbackInteractorImpl(
         }
         updateStatusInCircleMatcher(deployment.circle, request)
         deploymentService.update(deployment)
-        notifyEvent(request, deployment)
+//        notifyEvent(request, deployment)
     }
 
     private fun updateDeploymentInfo(deploymentId: String, request: DeploymentCallbackRequest): Deployment {
