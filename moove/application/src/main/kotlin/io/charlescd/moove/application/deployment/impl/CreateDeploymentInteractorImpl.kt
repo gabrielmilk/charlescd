@@ -30,7 +30,8 @@ import javax.inject.Named
 import org.springframework.transaction.annotation.Transactional
 
 @Named
-open class CreateDeploymentInteractorImpl @Inject constructor(
+open class
+CreateDeploymentInteractorImpl @Inject constructor(
     private val deploymentService: DeploymentService,
     private val buildService: BuildService,
     private val userService: UserService,
@@ -57,7 +58,7 @@ open class CreateDeploymentInteractorImpl @Inject constructor(
             deploy(deployment, build, workspace)
             return DeploymentResponse.from(deployment, build)
         } else {
-            notifyEvent(workspaceId, WebhookEventStatusEnum.FAIL, deployment)
+//            notifyEvent(workspaceId, WebhookEventStatusEnum.FAIL, deployment)
             throw BusinessException.of(MooveErrorCode.DEPLOY_INVALID_BUILD).withParameters(build.id)
         }
     }
@@ -103,9 +104,9 @@ open class CreateDeploymentInteractorImpl @Inject constructor(
     private fun deploy(deployment: Deployment, build: Build, workspace: Workspace) {
         try {
             deployService.deploy(deployment, build, deployment.circle.isDefaultCircle(), workspace.cdConfigurationId!!)
-            notifyEvent(workspace.id, WebhookEventStatusEnum.SUCCESS, deployment)
+//            notifyEvent(workspace.id, WebhookEventStatusEnum.SUCCESS, deployment)
         } catch (ex: Exception) {
-            notifyEvent(workspace.id, WebhookEventStatusEnum.FAIL, deployment, ex.message)
+//            notifyEvent(workspace.id, WebhookEventStatusEnum.FAIL, deployment, ex.message)
             throw ex
         }
     }
